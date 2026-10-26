@@ -342,12 +342,103 @@ function ensureStandardCarteTabs(st, info) {
   return info;
 }
 
+/* ---------------- Googleドライブ5生徒の実カルテデータ（初期搭載） ---------------- */
+const DRIVE_DOCS_SNAPSHOT = {
+  '土岐 芽生': {
+    textbook: '新編数学II ／ Study-Upノート ／ 白チャート（または入門問題精講）',
+    tabs: {
+      [TAB_REFLECTION]: `【振り返り・弱点整理】
+・例題の解答の「途中の計算」にピンポイントで焦点を当てる。
+・1次関数・2次関数において、xに数字を入れたらyが出てくる対応表（グラフの基礎）の理解。
+・連立3元1次方程式の計算（3点を通る円の方程式で必須）。
+・i² を「-1を掛ける」ではなく「引き算」と認識してしまう癖に注意。
+・「＝」を天秤（左辺と右辺が釣り合う）として意識する。`,
+      [TAB_NEXT_PLAN]: `【次回計画】
+・テストまで残り5回！雑談を減らし、授業冒頭に「白チャート改題の計算プリント2枚」を実施。
+・三角関数をサクッと終わらせて、最後の3回で「加法定理」と「合成」を仕上げる。`,
+      'テスト対策': `【テスト対策と振り返り】
+目標：50点 ➔ 結果：48点達成！
+■ テスト範囲の3段階仕分け（図形と方程式）
+・基本問題（9割死守）：練習 1, 3, 4, 5, 6, 8, 9, 10, 12, 13, 14, 15, 17, 19, 20, 21, 26
+・ちょい普通：練習 22, 23, 24, 25
+・捨てる問題：練習 16, 27, 39, 研究問題`
+    }
+  },
+  '藤田 湊空': {
+    textbook: '入試必修Study（100分授業：小テスト15分＋メイン60分＋対策20分）',
+    tabs: {
+      [TAB_REFLECTION]: `【10/19 英語（100分授業）振り返り】
+■ Plan（計画）
+・小テスト：15分 ／ 入試必修Study 7「副詞・形容詞」：60分 ／ テスト対策：20分
+  - 頻度の副詞（usually, often, sometimes, never, always）
+  - 程度の副詞（very, really, extremely）
+  - 様態の副詞（fast, well, quickly）
+■ Check（反省・気づき）
+・100分の時間の使い方を意識する（前半50分で一区切り）。
+・to不定詞のコアイメージがまだ曖昧。
+・先週やったことを今週やっても短期記憶で解けてしまうため、8日以上経過した単元を復習・宿題に出す。`,
+      [TAB_NEXT_PLAN]: `【次回計画】
+・冒頭15分：先週分を除外した8日以上経過単元の復習チェック
+・メイン60分：「前置詞（at, on, in, for, during, before）」と「接続詞」のコアイメージ指導
+・後半20分：定期テスト・入試対策演習`,
+      '数学': `【数学】
+・入試必修Study 数学の基礎計算と関数・図形の並行演習。
+・大問1の計算ミス防止と、時間差での解き直し。`
+    }
+  },
+  '遠藤 快音': {
+    textbook: '入試必修Study（100分授業：小テスト15分＋メイン60分＋対策20分）',
+    tabs: {
+      [TAB_REFLECTION]: `【10/19 英語（100分授業）振り返り】
+・頻度(usually/often/sometimes/never/always)、程度(very/really/extremely)、様態(fast/well/quickly)を指導。
+・先週やったことを今週テストしても短期記憶で解けてしまうため、期間が空いた単元を復習ピックアップする。`,
+      [TAB_NEXT_PLAN]: `【次回計画】
+・冒頭15分：8日以上経過した英語・数学単元の復習
+・メイン60分：前置詞（at, on, in, for, during, before）と接続詞のコアイメージ
+・後半20分：二次方程式・関数 y=ax² の基本パターン定着`
+    }
+  },
+  '藤田 渚岬': {
+    textbook: '英語・数学（標準ワーク・なぎさくんカルテ）',
+    tabs: {
+      [TAB_REFLECTION]: `【なぎさくん（藤田渚岬）振り返り記録】
+・英語（不定詞・接続詞）と数学（一次関数・連立方程式）の期間経過後の定着を確認。`,
+      [TAB_NEXT_PLAN]: `【次回計画】
+・前半15分：8日以上経過した英語・数学の基本復習
+・メイン：学校の進度に合わせた一次関数・不定詞の演習`
+    }
+  },
+  '保科 篤輝': {
+    textbook: '英語・数学（標準ワーク・あつきくんカルテ）',
+    tabs: {
+      [TAB_REFLECTION]: `【あつきくん（保科篤輝）振り返り記録】
+・英語（不定詞・動名詞・接続詞）の語順整理と、数学の連立方程式・一次関数の途中計算を重点確認。`,
+      [TAB_NEXT_PLAN]: `【次回計画】
+・前半15分：8日以上経過した単元の復習チェック
+・メイン：苦手単元のピンポイント演習と宿題確認`
+    }
+  }
+};
+
 function getDriveInfoForStudent(st) {
   if (!st) return null;
   state.driveDocs ||= {};
   const existing = state.driveDocs[st.id];
   if (existing && existing.ownerStudentId === st.id) {
     return ensureStandardCarteTabs(st, existing);
+  }
+  const snapKey = Object.keys(DRIVE_DOCS_SNAPSHOT).find((k) => st.name && st.name.includes(k));
+  if (snapKey) {
+    const snap = DRIVE_DOCS_SNAPSHOT[snapKey];
+    const doc = {
+      ownerStudentId: st.id,
+      docTitle: `${st.name}（${st.grade}）専用カルテ`,
+      textbook: snap.textbook || st.memo,
+      tabs: JSON.parse(JSON.stringify(snap.tabs))
+    };
+    state.driveDocs[st.id] = ensureStandardCarteTabs(st, doc);
+    save();
+    return state.driveDocs[st.id];
   }
   state.driveDocs[st.id] = ensureStandardCarteTabs(st, defaultCarteForStudent(st));
   save();
@@ -364,7 +455,6 @@ function getExamPlanForStudent(st) {
     save();
     return plan;
   }
-  // 旧フォーマット（phases配列）が残っている場合はシンプルなtodos配列へ自動移行
   if (!Array.isArray(plan.todos)) {
     if (Array.isArray(plan.phases)) {
       const curPhase = plan.phases.find((p) => p.isCurrent) || plan.phases[0];
@@ -380,22 +470,18 @@ function getExamPlanForStudent(st) {
   return plan;
 }
 
-// 旧バージョンの初期固定データ（st_toki等）が残っている場合は自動除外
-function purgeLegacyFiveStudentsIfNeeded() {
-  if (!Array.isArray(state.students)) return;
-  const isLegacyId = (id) => typeof id === 'string' && id.startsWith('st_') && !id.startsWith('st_sample_');
-  if (!state.students.some((s) => isLegacyId(s.id))) return;
-  const removed = new Set(state.students.filter((s) => isLegacyId(s.id)).map((s) => s.id));
-  state.students = state.students.filter((s) => !removed.has(s.id));
-  removed.forEach((id) => {
-    delete state.progress?.[id];
-    delete state.driveDocs?.[id];
-    delete state.examPlans?.[id];
-  });
-  state.schedules = (state.schedules || []).filter((sc) => !removed.has(sc.studentId));
+// もし汎用サンプル（st_sample_1 / st_sample_2）のみが入っている場合は5生徒の実データへ自動アップグレード
+function upgradeSampleStudentsIfNeeded() {
+  if (!Array.isArray(state.students) || state.students.length === 0) return false;
+  const onlyGenericSample = state.students.every((s) => s.id === 'st_sample_1' || s.id === 'st_sample_2');
+  if (onlyGenericSample) {
+    loadDefaultGenericStudents(true);
+    return true;
+  }
+  return false;
 }
 
-/* ---------------- 初期サンプル生徒（普遍的・汎用テンプレート） ---------------- */
+/* ---------------- 初期生徒データ（5名の担当生徒カルテ・進捗・予定） ---------------- */
 function loadDefaultGenericStudents(silent = false) {
   state.students = [];
   state.progress = {};
@@ -404,40 +490,72 @@ function loadDefaultGenericStudents(silent = false) {
   state.driveDocs = {};
   state.examPlans = {};
 
-  const s1 = { id: 'st_sample_1', name: 'サンプル生徒A', grade: '中3', memo: '英語・数学（標準ワーク）' };
-  const s2 = { id: 'st_sample_2', name: 'サンプル生徒B', grade: '高2', memo: '数学II・B ／ 英語' };
+  const sToki = { id: 'st_toki', name: '土岐 芽生', grade: '高2', memo: '新編数学II ／ Study-Upノート ／ 白チャート' };
+  const sSora = { id: 'st_sora', name: '藤田 湊空', grade: '中3', memo: '入試必修Study（英語・数学）' };
+  const sKaine = { id: 'st_kaine', name: '遠藤 快音', grade: '中3', memo: '入試必修Study（英語・数学）' };
+  const sNagisa = { id: 'st_nagisa', name: '藤田 渚岬', grade: '中2', memo: '英語・数学（標準ワーク）' };
+  const sAtsuki = { id: 'st_atsuki', name: '保科 篤輝', grade: '中2', memo: '英語・数学（標準ワーク）' };
 
-  state.students.push(s1, s2);
-  state.currentStudentId = s1.id;
+  state.students.push(sToki, sSora, sKaine, sNagisa, sAtsuki);
+  state.currentStudentId = sToki.id;
 
-  setLevel(s1.id, '中3|英語|現在完了', 2, daysAgoStr(12));
-  setLevel(s1.id, '中3|英語|関係代名詞', 1, daysAgoStr(9));
-  setLevel(s1.id, '中2|英語|不定詞', 1, daysAgoStr(18));
-  setLevel(s1.id, '中3|数学|二次方程式', 2, daysAgoStr(10));
-  setLevel(s1.id, '中3|数学|関数y=ax²', 3, daysAgoStr(3));
+  // 土岐 芽生 さん（高2・数学II）
+  setLevel(sToki.id, '高2|数学II|式と証明', 3, daysAgoStr(28));
+  setLevel(sToki.id, '高2|数学II|複素数と方程式', 2, daysAgoStr(20));
+  setLevel(sToki.id, '高2|数学II|図形と方程式', 2, daysAgoStr(14));
+  setLevel(sToki.id, '高2|数学II|三角関数', 1, daysAgoStr(9));
 
-  setLevel(s2.id, '高2|数学II|複素数と方程式', 2, daysAgoStr(15));
-  setLevel(s2.id, '高2|数学II|三角関数', 1, daysAgoStr(10));
+  // 藤田 湊空 くん & 遠藤 快音 くん（中3）
+  [sSora, sKaine].forEach((st) => {
+    setLevel(st.id, '中3|英語|現在完了', 2, daysAgoStr(12));
+    setLevel(st.id, '中3|英語|後置修飾', 1, daysAgoStr(15));
+    setLevel(st.id, '中3|英語|関係代名詞', 1, daysAgoStr(9));
+    setLevel(st.id, '中2|英語|不定詞', 2, daysAgoStr(21));
+    setLevel(st.id, '中2|英語|接続詞', 2, daysAgoStr(16));
+    setLevel(st.id, '中3|数学|因数分解', 3, daysAgoStr(20));
+    setLevel(st.id, '中3|数学|平方根', 2, daysAgoStr(15));
+    setLevel(st.id, '中3|数学|二次方程式', 2, daysAgoStr(10));
+    setLevel(st.id, '中3|数学|関数y=ax²', 1, daysAgoStr(6));
+  });
+
+  // 藤田 渚岬 くん & 保科 篤輝 くん（中2）
+  [sNagisa, sAtsuki].forEach((st) => {
+    setLevel(st.id, '中2|英語|不定詞', 2, daysAgoStr(14));
+    setLevel(st.id, '中2|英語|動名詞', 2, daysAgoStr(10));
+    setLevel(st.id, '中2|英語|接続詞', 1, daysAgoStr(16));
+    setLevel(st.id, '中2|数学|連立方程式', 3, daysAgoStr(18));
+    setLevel(st.id, '中2|数学|一次関数', 2, daysAgoStr(9));
+  });
 
   state.schedules = [
     {
-      id: 'sched_sample_1',
-      studentId: s1.id,
-      date: addDaysToDateStr(today(), 2),
-      time: '17:00',
+      id: 'sched_init_1',
+      studentId: sToki.id,
+      date: addDaysToDateStr(today(), 1),
+      time: '18:00',
       duration: 100,
-      unitKey: '中3|英語|関係代名詞',
-      memo: '冒頭15分：8日以上経過単元の復習 ／ メイン：関係代名詞の基本演習',
+      unitKey: '高2|数学II|三角関数',
+      memo: '・18:00〜18:15（15分）：白チャート改題の計算プリント2枚\n・18:15〜19:00（45分）：三角関数の基本公式・加法定理\n・19:00〜19:30（30分）：問題演習\n・19:30〜19:40（10分）：まとめ・宿題指定',
       done: false
     },
     {
-      id: 'sched_sample_2',
-      studentId: s2.id,
-      date: addDaysToDateStr(today(), 4),
-      time: '18:30',
+      id: 'sched_init_2',
+      studentId: sSora.id,
+      date: addDaysToDateStr(today(), 2),
+      time: '17:00',
       duration: 100,
-      unitKey: '高2|数学II|三角関数',
-      memo: '冒頭15分：複素数と方程式の復習 ／ メイン：三角関数の基本公式',
+      unitKey: '中3|英語|前置詞（at/on/in/for/during）',
+      memo: '・17:00〜17:15（15分）：8日以上経過単元の小テスト\n・17:15〜18:15（60分）：前置詞・接続詞のコアイメージ指導\n・18:15〜18:40（25分）：テスト対策演習',
+      done: false
+    },
+    {
+      id: 'sched_init_3',
+      studentId: sNagisa.id,
+      date: addDaysToDateStr(today(), 3),
+      time: '19:00',
+      duration: 100,
+      unitKey: '中2|数学|一次関数',
+      memo: '・19:00〜19:15（15分）：8日経過単元の復習\n・19:15〜20:30（75分）：一次関数のグラフと変域\n・20:30〜20:40（10分）：次回宿題確認',
       done: false
     }
   ];
@@ -450,7 +568,7 @@ function loadDefaultGenericStudents(silent = false) {
   save();
   refreshSelects();
   renderAll();
-  if (!silent) toast('初期状態にリセットしました');
+  if (!silent) toast('📥 5生徒（土岐・藤田湊空・遠藤・藤田渚岬・保科）のカルテデータを読み込みました！');
 }
 
 /* ---------------- 画面切り替え＆全体描画 ---------------- */
@@ -481,6 +599,15 @@ function refreshSelects() {
   } else if (state.students[0]) {
     sel.value = state.students[0].id;
     state.currentStudentId = state.students[0].id;
+  }
+
+  // スマホ用：上部1タップ生徒切り替えピルバーの描画
+  const mPills = $('#mobile-student-pills');
+  if (mPills) {
+    mPills.innerHTML = state.students.map((s) => {
+      const isAct = s.id === state.currentStudentId;
+      return `<button type="button" class="m-st-pill ${isAct ? 'active' : ''}" data-mst-id="${esc(s.id)}">👤 ${esc(displayStudentName(s.name))}<span style="font-size:11px;opacity:0.85;">(${esc(s.grade)})</span></button>`;
+    }).join('') + `<button type="button" class="m-st-pill add-pill" id="btn-mobile-add-student">＋生徒追加</button>`;
   }
 }
 
@@ -789,6 +916,12 @@ function renderHome() {
     });
 
   const recBox = $('#home-recommend-units');
+  const totalDueCount = manualList.length + recUnits.length;
+  const navRevBadge = $('#m-nav-review-badge');
+  if (navRevBadge) {
+    navRevBadge.textContent = String(totalDueCount);
+    navRevBadge.hidden = totalDueCount === 0;
+  }
   if (recBox) {
     const manualHtml = manualList.map((item) => `
       <div class="rec-unit-row">
@@ -1721,8 +1854,8 @@ function promptQuickAddStudent() {
 
 /* ---------------- 初期化とイベントリスナー ---------------- */
 function init() {
-  // 過去の5人の特定生徒データがlocalStorageに残っている場合は自動クリーンアップ
-  purgeLegacyFiveStudentsIfNeeded();
+  // もしサンプル生徒（A/B）のみが入っている場合は5生徒の実データへ自動アップグレード
+  upgradeSampleStudentsIfNeeded();
 
   if (!state.initialized || !Array.isArray(state.students) || state.students.length === 0) {
     loadDefaultGenericStudents(true);
@@ -1744,35 +1877,40 @@ function init() {
 
   refreshSelects();
 
-  // タブ切り替え
+  // タブ切り替え（PC用）
   $$('.tab').forEach((t) => t.addEventListener('click', () => showView(t.dataset.view)));
 
-  // モバイル用ボトムナビ切り替え
+  // スマホ用：上部1タップ生徒切り替えピルバーのクリック
+  $('#mobile-student-pills')?.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-mobile-add-student')) {
+      promptQuickAddStudent();
+      return;
+    }
+    const pill = e.target.closest('[data-mst-id]');
+    if (pill) {
+      switchActiveStudent(pill.dataset.mstId);
+    }
+  });
+
+  // モバイル用ボトムナビ切り替え（1画面1機能でスッキリ表示）
   $$('.m-nav-btn').forEach((b) => {
     b.addEventListener('click', () => {
       const target = b.dataset.mview;
       $$('.m-nav-btn').forEach((x) => x.classList.toggle('active', x === b));
       if (target === 'drive') {
+        selectedPickerUnitKey = null;
         showView('drive');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (target === 'calendar') {
+        selectedPickerUnitKey = null;
         showView('calendar');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
+        const homeSec = $('#view-home');
+        if (homeSec) homeSec.dataset.msection = target;
+        if (target !== 'units') selectedPickerUnitKey = null;
         showView('home');
-        if (target === 'units') {
-          setTimeout(() => $('#section-unit-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-        } else if (target === 'exam') {
-          const st = getActiveStudent();
-          if (st) {
-            saveInlineDocEdits(st.id);
-            activeDocTabByStudent[st.id] = TAB_GOAL_TODO;
-            renderHome();
-          }
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     });
   });
@@ -1860,7 +1998,11 @@ function init() {
     activeDocTabByStudent[st.id] = TAB_GOAL_TODO;
     renderHome();
   });
-  $('#btn-jump-calendar')?.addEventListener('click', () => showView('calendar'));
+  $('#btn-jump-calendar')?.addEventListener('click', () => {
+    $$('.m-nav-btn').forEach((x) => x.classList.toggle('active', x.dataset.mview === 'calendar'));
+    showView('calendar');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   // 右カード上部：「🔥 復習すべき単元」への自由記入追加（ボタン ＆ Enterキー）
   const addManualReviewItem = () => {
@@ -2143,6 +2285,9 @@ function init() {
     const chip = e.target.closest('[data-rec-open-picker]');
     if (chip) {
       selectedPickerUnitKey = chip.dataset.recOpenPicker;
+      const homeSec = $('#view-home');
+      if (homeSec) homeSec.dataset.msection = 'units';
+      $$('.m-nav-btn').forEach((x) => x.classList.toggle('active', x.dataset.mview === 'units'));
       renderHomeUnitMap();
       $('#section-unit-map')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -2307,6 +2452,10 @@ function init() {
     const f = e.target.files[0];
     if (f) importData(await f.text());
     e.target.value = '';
+  });
+  $('#btn-restore-five')?.addEventListener('click', () => {
+    if (!confirm('5生徒（土岐芽生さん・藤田湊空くん・遠藤快音くん・藤田渚岬くん・保科篤輝くん）のカルテデータを読み込みますか？')) return;
+    loadDefaultGenericStudents(false);
   });
   $('#btn-reset')?.addEventListener('click', () => {
     if (!confirm('本当に全データを初期状態に戻しますか？')) return;

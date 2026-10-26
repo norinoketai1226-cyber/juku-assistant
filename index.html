@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f172a">
@@ -22,6 +22,9 @@
         </div>
       </div>
 
+      <!-- スマホ用：1タップ生徒切り替えピルバー（横スクロール対応） -->
+      <div id="mobile-student-pills" class="mobile-student-pills"></div>
+
       <nav class="tabs">
         <button class="tab active" data-view="home">🏠 カルテ・目標・復習・単元</button>
         <button class="tab" data-view="calendar">📅 授業カレンダー</button>
@@ -31,15 +34,15 @@
   </header>
 
   <main>
-    <!-- 1. メイン画面（生徒カルテ［振り返り／次回計画／目標・やること］ ／ 復習＆直近予定 ／ 単元理解度マップ） -->
-    <section id="view-home" class="view active">
+    <!-- 1. メイン画面（PCでは一覧表示 ／ スマホでは下部ナビで「カルテ・目標」「復習・予定」「単元マップ」を1画面ずつ切替） -->
+    <section id="view-home" class="view active" data-msection="carte">
       <div class="two-col">
         <!-- 左（広め）：生徒カルテ（「✍️ 振り返り記録」「📅 次回計画」「🎯 目標・やること」タブ統合 ＆ カルテ内検索） -->
-        <div class="card drive-summary-card">
+        <div class="card drive-summary-card" id="card-carte">
           <div class="card-head" style="margin-bottom:8px;">
             <div class="row no-margin" style="gap:8px;">
               <h2 id="home-student-title">📄 生徒カルテ</h2>
-              <button type="button" id="home-goal-badge" class="badge warn goal-countdown-badge" title="クリックで「🎯 目標・やること」タブを開きます">🎯 目標まであと - 日</button>
+              <button type="button" id="home-goal-badge" class="badge warn goal-countdown-badge" title="タップで「🎯 目標・やること」タブを開きます">🎯 目標まであと - 日</button>
             </div>
             <div class="row no-margin">
               <button type="button" id="btn-insert-date-header" class="primary small" title="開いているタブの先頭に今日の日付見出しを挿入">＋ 今日の日付見出し</button>
@@ -49,15 +52,15 @@
         </div>
 
         <!-- 右（スリム）：復習すべき単元（自由記入＋8日以上経過の自動抽出） ＆ 直近の授業予定（カレンダー連動） -->
-        <div class="card action-card">
+        <div class="card action-card" id="card-review-upcoming">
           <div>
             <div class="card-head" style="margin-bottom:4px;">
               <h2>🔥 復習すべき単元</h2>
               <span class="badge warn">📌 自由記入 ＆ ⏰ 8日経過</span>
             </div>
             <div class="rec-manual-add-row">
-              <input type="text" id="input-manual-review" placeholder="復習したい単元・内容を自由記入（Enterで追加）...">
-              <button type="button" id="btn-add-manual-review" class="secondary small">＋ 追加</button>
+              <input type="text" id="input-manual-review" placeholder="復習したい単元・内容を自由記入...">
+              <button type="button" id="btn-add-manual-review" class="primary small">＋ 追加</button>
             </div>
             <div id="home-recommend-units" class="rec-unit-list"></div>
           </div>
@@ -65,7 +68,7 @@
           <div class="home-upcoming-box">
             <div class="card-head" style="margin-bottom:6px;">
               <h3 style="margin:0;">📅 直近の授業予定</h3>
-              <button type="button" id="btn-jump-calendar" class="secondary small" style="padding:3px 8px;font-size:11.5px;">カレンダーへ →</button>
+              <button type="button" id="btn-jump-calendar" class="secondary small" style="padding:5px 10px;font-size:12px;">カレンダーへ →</button>
             </div>
             <div id="home-upcoming-schedules" class="home-upcoming-list"></div>
           </div>
@@ -75,7 +78,7 @@
       <!-- 中段：学年・教科別の単元理解度・完了マップ -->
       <div class="card" id="section-unit-map">
         <div class="card-head">
-          <div>
+          <div style="width:100%;">
             <h2>📊 単元理解度・完了マップ</h2>
             <div id="unit-mastery-summary" class="mastery-summary-bar"></div>
           </div>
@@ -90,7 +93,7 @@
           </div>
         </div>
 
-        <!-- 単元タップ時に開く1タップ操作バー -->
+        <!-- 単元タップ時に開く1タップ操作バー（スマホでは画面下部に固定ポップアップ表示） -->
         <div id="unit-quick-picker" class="unit-picker-bar" hidden></div>
 
         <!-- 単元の自由追加フォーム -->
@@ -108,7 +111,7 @@
               </select>
             </label>
             <label>教科名：
-              <input type="text" id="custom-unit-subj" list="subj-datalist" placeholder="例：数学I・A、英語、物理" style="width:150px;">
+              <input type="text" id="custom-unit-subj" list="subj-datalist" placeholder="例：数学I・A、英語" style="width:140px;">
               <datalist id="subj-datalist">
                 <option value="数学"></option>
                 <option value="数学I・A"></option>
@@ -124,7 +127,7 @@
                 <option value="国語"></option>
               </datalist>
             </label>
-            <input type="text" id="custom-unit-name" class="grow" placeholder="追加する単元名（例：2次関数の最大最小、仮定法、定期テスト対策プリント）">
+            <input type="text" id="custom-unit-name" class="grow" placeholder="追加する単元名（例：2次関数の最大最小、仮定法）">
             <button type="button" id="btn-add-custom-unit" class="primary small">＋ 単元を追加</button>
           </div>
         </details>
@@ -140,23 +143,6 @@
 
     <!-- 3. 生徒管理・バックアップ -->
     <section id="view-drive" class="view">
-      <div class="card" style="border-top: 4px solid #10b981;">
-        <div class="card-head">
-          <h2>📱 スマホで開く（外出先・塾でも使用可能）</h2>
-          <span class="badge ok">🌐 Web公開済み・PWA対応</span>
-        </div>
-        <div class="row" style="align-items: center; gap: 16px; flex-wrap: wrap;">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=https://norinoketai1226-cyber.github.io/juku-assistant/" alt="スマホ用QRコード" width="130" height="130" style="border-radius: 10px; border: 1px solid #e2e8f0; padding: 6px; background: #fff;">
-          <div style="flex: 1; min-width: 240px;">
-            <p style="margin: 0 0 6px; font-weight: 700; font-size: 14px;">スマホのカメラで左のQRコードを読み取るか、以下のURLを開いてください：</p>
-            <div style="margin-bottom: 8px;">
-              <a href="https://norinoketai1226-cyber.github.io/juku-assistant/" target="_blank" rel="noopener" style="font-weight: 800; color: #2563eb; word-break: break-all; font-size: 14.5px;">https://norinoketai1226-cyber.github.io/juku-assistant/</a>
-            </div>
-            <p class="sub-note" style="margin: 0;">💡 iPhone（Safariの共有ボタン）やAndroid（Chromeのメニュー）から<strong>「ホーム画面に追加」</strong>すると、フル画面の専用アプリとしていつでも起動できます。PCとスマホ間でデータを移す場合は下の「JSONファイルに保存／読み込む」をご利用ください。</p>
-          </div>
-        </div>
-      </div>
-
       <div class="card">
         <div class="card-head">
           <h2>👥 生徒の追加・管理 ＆ 🔒 プライバシー保護</h2>
@@ -180,33 +166,54 @@
 
       <div class="card">
         <div class="card-head">
-          <h2>💾 データのバックアップ（ファイル保存・復元）</h2>
-          <span class="sub-note">すべてのデータはこのブラウザに自動保存されています。別端末への移行時やバックアップ用にJSONファイルとして保存できます。</span>
+          <h2>💾 データのバックアップ・復元</h2>
+          <span class="sub-note">すべてのデータはこのブラウザに自動保存されています。別端末への移行時やバックアップ用にJSONファイルとして保存・復元できます。</span>
         </div>
         <div class="row">
-          <button id="btn-export" class="primary">⬇ 全データをJSONファイルに保存</button>
+          <button id="btn-export" class="primary">⬇ 全データをJSON保存</button>
           <label class="secondary file-btn">⬆ JSONファイルを読み込む
             <input type="file" id="file-import" accept=".json,application/json" hidden>
           </label>
+          <button id="btn-restore-five" class="secondary small">📥 5生徒（土岐・藤田・遠藤・保科）のカルテを復元</button>
           <button id="btn-reset" class="danger small">🗑 初期状態に戻す</button>
+        </div>
+      </div>
+
+      <div class="card" style="border-top: 4px solid #10b981;">
+        <div class="card-head">
+          <h2>📱 スマホで開く（外出先・塾でも使用可能）</h2>
+          <span class="badge warn">🌐 Web公開済み・PWA対応</span>
+        </div>
+        <div class="row" style="align-items: center; gap: 16px; flex-wrap: wrap;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=https://norinoketai1226-cyber.github.io/juku-assistant/" alt="スマホ用QRコード" width="120" height="120" style="border-radius: 10px; border: 1px solid #e2e8f0; padding: 6px; background: #fff;">
+          <div style="flex: 1; min-width: 220px;">
+            <p style="margin: 0 0 6px; font-weight: 700; font-size: 13.5px;">スマホ・PC共通URL：</p>
+            <div style="margin-bottom: 8px;">
+              <a href="https://norinoketai1226-cyber.github.io/juku-assistant/" target="_blank" rel="noopener" style="font-weight: 800; color: #2563eb; word-break: break-all; font-size: 14px;">https://norinoketai1226-cyber.github.io/juku-assistant/</a>
+            </div>
+            <p class="sub-note" style="margin: 0;">💡 iPhone（Safariの共有ボタン）やAndroid（Chromeのメニュー）から<strong>「ホーム画面に追加」</strong>すると専用アプリとして起動できます。</p>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- スマホ・タブレット用ボトムナビゲーション -->
+  <!-- スマホ・タブレット用ボトムナビゲーション（1画面1機能でスッキリ切り替え） -->
   <nav class="mobile-bottom-nav no-print">
-    <button type="button" class="m-nav-btn active" data-mview="home">
-      <span class="m-icon">🏠</span>
-      <span>カルテ・復習</span>
+    <button type="button" class="m-nav-btn active" data-mview="carte">
+      <span class="m-icon">📄</span>
+      <span>カルテ・目標</span>
+    </button>
+    <button type="button" class="m-nav-btn" data-mview="review">
+      <span class="m-icon-wrap">
+        <span class="m-icon">🔥</span>
+        <span id="m-nav-review-badge" class="m-nav-badge" hidden>0</span>
+      </span>
+      <span>復習・予定</span>
     </button>
     <button type="button" class="m-nav-btn" data-mview="units">
       <span class="m-icon">📊</span>
       <span>単元マップ</span>
-    </button>
-    <button type="button" class="m-nav-btn" data-mview="exam">
-      <span class="m-icon">🎯</span>
-      <span>目標・やること</span>
     </button>
     <button type="button" class="m-nav-btn" data-mview="calendar">
       <span class="m-icon">📅</span>

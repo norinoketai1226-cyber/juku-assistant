@@ -1318,90 +1318,18 @@ function formatTimeBlocksToMemoText(startTimeStr) {
     .join('\n');
 }
 
-function buildTimeBuilderHtml(startTimeStr, totalDuration) {
-  const targetDur = Math.max(15, Number(totalDuration) || 100);
-  let cumMin = 0;
-  const rowsHtml = calTimeBlocks.map((b) => {
-    const m = Math.max(0, Number(b.minutes) || 0);
-    const s = cumMin;
-    const e = cumMin + m;
-    cumMin = e;
-    const tStart = formatClockAddMinutes(startTimeStr, s);
-    const tEnd = formatClockAddMinutes(startTimeStr, e);
-    const rangeLabel = (tStart && tEnd) ? `${tStart}〜${tEnd} (${s}〜${e}分)` : `${s}〜${e}分`;
-    return `
-      <div class="time-builder-row" data-tb-row="${esc(b.id)}">
-        <span class="time-slot-range" data-tb-range="${esc(b.id)}">${esc(rangeLabel)}</span>
-        <span class="time-slot-min-wrap">
-          <input type="number" class="time-slot-min-input" data-tb-min="${esc(b.id)}" value="${esc(m)}" min="5" max="240" step="5">
-          <span>分</span>
-        </span>
-        <input type="text" class="time-slot-label-input" data-tb-label="${esc(b.id)}" value="${esc(b.label)}" placeholder="この時間枠でやること（自由入力）...">
-        <button type="button" class="phase-task-del" data-tb-del="${esc(b.id)}" title="この時間枠を削除">✕</button>
-      </div>
-    `;
-  }).join('');
-
-  const diff = targetDur - cumMin;
-  const badgeCls = diff === 0 ? 'exact' : diff > 0 ? 'under' : 'over';
-  const badgeText = diff === 0
-    ? `合計 ${cumMin} / ${targetDur} 分（ちょうど）`
-    : diff > 0
-      ? `合計 ${cumMin} / ${targetDur} 分（残り ${diff} 分）`
-      : `合計 ${cumMin} / ${targetDur} 分（${Math.abs(diff)} 分超過）`;
-
+function buildTimeBuilderHtml() {
   return `
-    <div class="time-builder-box" id="cal-time-builder">
-      <div class="time-builder-head">
-        <div class="time-builder-title">
-          <span>⏱ 次の授業の時間予定を組み立てる</span>
-          <span class="time-total-badge ${badgeCls}" id="tb-total-badge">${esc(badgeText)}</span>
-        </div>
-        <div class="time-builder-templates">
-          <span style="font-size:11.5px;color:#64748b;font-weight:700;">テンプレ読込：</span>
-          <button type="button" class="secondary small" data-tb-tpl="standard">📋 標準構成</button>
-          <button type="button" class="secondary small" data-tb-tpl="exercise">🔥 演習・テスト対策</button>
-          <button type="button" class="secondary small" data-tb-tpl="review">🌱 基礎・復習重視</button>
-        </div>
-      </div>
-      <div class="time-builder-rows" id="tb-rows-container">
-        ${rowsHtml || '<span class="sub-note" style="margin:2px 0;">「＋ 時間枠を追加」または上のテンプレから時間配分を組み立てられます。</span>'}
-      </div>
-      <div class="time-builder-footer">
-        <button type="button" class="secondary small" id="btn-tb-add-slot">＋ 時間枠を追加</button>
-        <button type="button" class="primary small" id="btn-tb-apply-memo">⬇ 組み立てた時間予定を下の次回予定メモに反映</button>
-      </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:4px 0;">
+      <span style="font-size:12px;color:#1e3a8a;font-weight:700;">⏱ 時間配分をメモへ1タップ挿入：</span>
+      <button type="button" class="secondary small" style="padding:4px 9px;font-size:11.5px;" data-tb-tpl="standard">📋 標準構成</button>
+      <button type="button" class="secondary small" style="padding:4px 9px;font-size:11.5px;" data-tb-tpl="exercise">🔥 演習・対策</button>
+      <button type="button" class="secondary small" style="padding:4px 9px;font-size:11.5px;" data-tb-tpl="review">🌱 基礎・復習</button>
     </div>
   `;
 }
 
-function updateTimeBuilderBadgesDOM() {
-  const startTimeStr = $('#sched-time')?.value || calDraftForm.time || '17:00';
-  const targetDur = Math.max(15, Number($('#sched-duration')?.value || calDraftForm.duration) || 100);
-  let cumMin = 0;
-  calTimeBlocks.forEach((b) => {
-    const m = Math.max(0, Number(b.minutes) || 0);
-    const s = cumMin;
-    const e = cumMin + m;
-    cumMin = e;
-    const rangeEl = $(`[data-tb-range="${b.id}"]`);
-    if (rangeEl) {
-      const tStart = formatClockAddMinutes(startTimeStr, s);
-      const tEnd = formatClockAddMinutes(startTimeStr, e);
-      rangeEl.textContent = (tStart && tEnd) ? `${tStart}〜${tEnd} (${s}〜${e}分)` : `${s}〜${e}分`;
-    }
-  });
-  const badge = $('#tb-total-badge');
-  if (badge) {
-    const diff = targetDur - cumMin;
-    badge.className = `time-total-badge ${diff === 0 ? 'exact' : diff > 0 ? 'under' : 'over'}`;
-    badge.textContent = diff === 0
-      ? `合計 ${cumMin} / ${targetDur} 分（ちょうど）`
-      : diff > 0
-        ? `合計 ${cumMin} / ${targetDur} 分（残り ${diff} 分）`
-        : `合計 ${cumMin} / ${targetDur} 分（${Math.abs(diff)} 分超過）`;
-  }
-}
+function updateTimeBuilderBadgesDOM() {}
 
 function reflectAddedScheduleToCarte(st, sc) {
   if (!st || !sc) return;
@@ -1570,50 +1498,13 @@ function onCalendarClick(e) {
   const st = getActiveStudent();
   if (!st) return;
 
-  // 時間配分ビルダー：テンプレ読込ボタン
+  // 時間配分テンプレ1タップ挿入ボタン（開始時間・授業時間に合わせて直接メモ欄へ挿入）
   const tplBtn = e.target.closest('[data-tb-tpl]');
   if (tplBtn) {
     syncCalendarDraftFromDOM();
     applyTimeBuilderTemplate(tplBtn.dataset.tbTpl, calDraftForm.duration);
-    renderCalendar();
-    toast('⏱ 時間配分テンプレートを読み込みました（分数・内容は自由に変更できます）');
-    return;
-  }
-
-  // 時間配分ビルダー：枠の削除ボタン
-  const delSlotBtn = e.target.closest('[data-tb-del]');
-  if (delSlotBtn) {
-    syncCalendarDraftFromDOM();
-    const bid = delSlotBtn.dataset.tbDel;
-    calTimeBlocks = calTimeBlocks.filter((b) => b.id !== bid);
-    renderCalendar();
-    return;
-  }
-
-  // 時間配分ビルダー：＋ 時間枠を追加
-  if (e.target.closest('#btn-tb-add-slot')) {
-    syncCalendarDraftFromDOM();
-    const targetDur = Math.max(15, Number(calDraftForm.duration) || 100);
-    const used = calTimeBlocks.reduce((acc, b) => acc + (Number(b.minutes) || 0), 0);
-    const rem = targetDur - used;
-    const defaultMin = rem >= 5 ? rem : 15;
-    const newId = uid();
-    calTimeBlocks.push({ id: newId, minutes: defaultMin, label: '' });
-    renderCalendar();
-    $(`[data-tb-label="${newId}"]`)?.focus();
-    return;
-  }
-
-  // 時間配分ビルダー：⬇ 組み立てた時間予定を下の次回予定メモに反映
-  if (e.target.closest('#btn-tb-apply-memo')) {
-    syncCalendarDraftFromDOM();
     const formatted = formatTimeBlocksToMemoText(calDraftForm.time);
-    if (!formatted) {
-      toast('時間枠を追加・入力してください');
-      return;
-    }
     const curMemo = (calDraftForm.memo || '').trim();
-    // すでに手書きメモがある場合は改行して追記するか、空ならそのままセット
     const nonTimeLines = curMemo
       .split('\n')
       .filter((line) => line.trim() && !/^・\d{1,2}[:〜]/.test(line.trim()));
@@ -1624,7 +1515,7 @@ function onCalendarClick(e) {
       $('#sched-memo').value = calDraftForm.memo;
       $('#sched-memo').focus();
     }
-    toast('⬇ 組み立てた時間予定を次回予定メモに反映しました！');
+    toast('⏱ 時間配分をメモ欄に挿入しました！（そのまま自由に編集できます）');
     return;
   }
 

@@ -1,0 +1,10 @@
+{
+  "name": "塾講師アシスタント｜生徒カルテ・復習・単元マップ・カレンダー",
+  "short_name": "塾講師アシスト",
+  "description": "生徒カルテ・8日経過の復習ピックアップ・単元理解度マップ・月間目標・授業カレンダーを一元管理する塾講師専用ツール",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait"
+}

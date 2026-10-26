@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f172a">
+  <title>塾講師アシスタント｜復習ピックアップ・生徒カルテ・単元マップ・月間目標・カレンダー</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header no-print">
+    <div class="header-inner">
+      <div class="brand-row">
+        <h1>📚 塾講師アシスタント</h1>
+        <div class="student-switcher">
+          <label for="global-student">担当生徒：</label>
+          <select id="global-student" class="student-select"></select>
+          <button type="button" id="btn-header-add-student" class="secondary small" style="padding:4px 9px;font-size:11.5px;">＋ 生徒追加</button>
+        </div>
+      </div>
+
+      <nav class="tabs">
+        <button class="tab active" data-view="home">🏠 カルテ・目標・復習・単元</button>
+        <button class="tab" data-view="calendar">📅 授業カレンダー</button>
+        <button class="tab" data-view="drive">👥 生徒管理・保存</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. メイン画面（生徒カルテ［振り返り／次回計画／目標・やること］ ／ 復習＆直近予定 ／ 単元理解度マップ） -->
+    <section id="view-home" class="view active">
+      <div class="two-col">
+        <!-- 左（広め）：生徒カルテ（「✍️ 振り返り記録」「📅 次回計画」「🎯 目標・やること」タブ統合 ＆ カルテ内検索） -->
+        <div class="card drive-summary-card">
+          <div class="card-head" style="margin-bottom:8px;">
+            <div class="row no-margin" style="gap:8px;">
+              <h2 id="home-student-title">📄 生徒カルテ</h2>
+              <button type="button" id="home-goal-badge" class="badge warn goal-countdown-badge" title="クリックで「🎯 目標・やること」タブを開きます">🎯 目標まであと - 日</button>
+            </div>
+            <div class="row no-margin">
+              <button type="button" id="btn-insert-date-header" class="primary small" title="開いているタブの先頭に今日の日付見出しを挿入">＋ 今日の日付見出し</button>
+            </div>
+          </div>
+          <div id="home-drive-content"></div>
+        </div>
+
+        <!-- 右（スリム）：復習すべき単元（自由記入＋8日以上経過の自動抽出） ＆ 直近の授業予定（カレンダー連動） -->
+        <div class="card action-card">
+          <div>
+            <div class="card-head" style="margin-bottom:4px;">
+              <h2>🔥 復習すべき単元</h2>
+              <span class="badge warn">📌 自由記入 ＆ ⏰ 8日経過</span>
+            </div>
+            <div class="rec-manual-add-row">
+              <input type="text" id="input-manual-review" placeholder="復習したい単元・内容を自由記入（Enterで追加）...">
+              <button type="button" id="btn-add-manual-review" class="secondary small">＋ 追加</button>
+            </div>
+            <div id="home-recommend-units" class="rec-unit-list"></div>
+          </div>
+
+          <div class="home-upcoming-box">
+            <div class="card-head" style="margin-bottom:6px;">
+              <h3 style="margin:0;">📅 直近の授業予定</h3>
+              <button type="button" id="btn-jump-calendar" class="secondary small" style="padding:3px 8px;font-size:11.5px;">カレンダーへ →</button>
+            </div>
+            <div id="home-upcoming-schedules" class="home-upcoming-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中段：学年・教科別の単元理解度・完了マップ -->
+      <div class="card" id="section-unit-map">
+        <div class="card-head">
+          <div>
+            <h2>📊 単元理解度・完了マップ</h2>
+            <div id="unit-mastery-summary" class="mastery-summary-bar"></div>
+          </div>
+          <div class="filter-controls">
+            <div class="filter-pills" id="unit-subject-pills"></div>
+            <div class="filter-pills" id="unit-filter-pills">
+              <button class="pill active" data-filter="current">現在学年</button>
+              <button class="pill" data-filter="weak">苦手（×・△）</button>
+              <button class="pill" data-filter="unlearned">未習（未）</button>
+              <button class="pill" data-filter="all">全学年</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 単元タップ時に開く1タップ操作バー -->
+        <div id="unit-quick-picker" class="unit-picker-bar" hidden></div>
+
+        <!-- 単元の自由追加フォーム -->
+        <details class="custom-unit-details">
+          <summary>＋ 単元・教科を自由に追加する</summary>
+          <div class="row" style="margin-top:8px;">
+            <label>学年：
+              <select id="custom-unit-grade">
+                <option value="中1">中1</option>
+                <option value="中2">中2</option>
+                <option value="中3">中3</option>
+                <option value="高1">高1</option>
+                <option value="高2">高2</option>
+                <option value="高3">高3</option>
+              </select>
+            </label>
+            <label>教科名：
+              <input type="text" id="custom-unit-subj" list="subj-datalist" placeholder="例：数学I・A、英語、物理" style="width:150px;">
+              <datalist id="subj-datalist">
+                <option value="数学"></option>
+                <option value="数学I・A"></option>
+                <option value="数学II"></option>
+                <option value="数学B"></option>
+                <option value="数学III・C"></option>
+                <option value="英語"></option>
+                <option value="理科"></option>
+                <option value="化学"></option>
+                <option value="物理"></option>
+                <option value="生物"></option>
+                <option value="社会"></option>
+                <option value="国語"></option>
+              </datalist>
+            </label>
+            <input type="text" id="custom-unit-name" class="grow" placeholder="追加する単元名（例：2次関数の最大最小、仮定法、定期テスト対策プリント）">
+            <button type="button" id="btn-add-custom-unit" class="primary small">＋ 単元を追加</button>
+          </div>
+        </details>
+
+        <div id="home-unit-map"></div>
+      </div>
+    </section>
+
+    <!-- 2. 📅 授業カレンダー -->
+    <section id="view-calendar" class="view">
+      <div id="calendar-body"></div>
+    </section>
+
+    <!-- 3. 生徒管理・バックアップ -->
+    <section id="view-drive" class="view">
+      <div class="card">
+        <div class="card-head">
+          <h2>👥 生徒の追加・管理 ＆ 🔒 プライバシー保護</h2>
+          <button id="btn-privacy-toggle" class="secondary small">🔒 生徒名をイニシャル表示に切替（覗き見防止）</button>
+        </div>
+        <div class="row">
+          <input id="st-name" placeholder="新しい生徒名">
+          <select id="st-grade">
+            <option>中1</option>
+            <option>中2</option>
+            <option selected>中3</option>
+            <option>高1</option>
+            <option>高2</option>
+            <option>高3</option>
+          </select>
+          <input id="st-memo" placeholder="使用教材・目標メモ" class="grow">
+          <button id="btn-add-student" class="primary">＋ 生徒を追加</button>
+        </div>
+        <div id="student-manage-list" class="manage-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>💾 データのバックアップ（ファイル保存・復元）</h2>
+          <span class="sub-note">すべてのデータはこのブラウザに自動保存されています。別端末への移行時やバックアップ用にJSONファイルとして保存できます。</span>
+        </div>
+        <div class="row">
+          <button id="btn-export" class="primary">⬇ 全データをJSONファイルに保存</button>
+          <label class="secondary file-btn">⬆ JSONファイルを読み込む
+            <input type="file" id="file-import" accept=".json,application/json" hidden>
+          </label>
+          <button id="btn-reset" class="danger small">🗑 初期状態に戻す</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- スマホ・タブレット用ボトムナビゲーション -->
+  <nav class="mobile-bottom-nav no-print">
+    <button type="button" class="m-nav-btn active" data-mview="home">
+      <span class="m-icon">🏠</span>
+      <span>カルテ・復習</span>
+    </button>
+    <button type="button" class="m-nav-btn" data-mview="units">
+      <span class="m-icon">📊</span>
+      <span>単元マップ</span>
+    </button>
+    <button type="button" class="m-nav-btn" data-mview="exam">
+      <span class="m-icon">🎯</span>
+      <span>目標・やること</span>
+    </button>
+    <button type="button" class="m-nav-btn" data-mview="calendar">
+      <span class="m-icon">📅</span>
+      <span>カレンダー</span>
+    </button>
+    <button type="button" class="m-nav-btn" data-mview="drive">
+      <span class="m-icon">👥</span>
+      <span>生徒・保存</span>
+    </button>
+  </nav>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

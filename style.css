@@ -995,6 +995,42 @@ button, .file-btn {
   margin-right: 6px;
 }
 
+/* スマホ用：ヘッダーの1タップ生徒切り替えピルバー */
+.mobile-student-pills {
+  display: none;
+  width: 100%;
+  overflow-x: auto;
+  gap: 6px;
+  padding: 2px 0 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.mobile-student-pills::-webkit-scrollbar {
+  display: none;
+}
+.m-st-pill {
+  flex-shrink: 0;
+  background: #1e293b;
+  color: #cbd5e1;
+  border: 1px solid #334155;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.m-st-pill.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #60a5fa;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+}
+.m-st-pill.add-pill {
+  background: #0f172a;
+  color: #93c5fd;
+  border: 1px dashed #475569;
+}
+
 /* スマホ専用ボトムナビゲーションバー */
 .mobile-bottom-nav {
   display: none;
@@ -1005,27 +1041,53 @@ button, .file-btn {
   background: #0f172a;
   border-top: 1px solid #334155;
   z-index: 50;
-  padding: 4px 6px calc(4px + env(safe-area-inset-bottom));
+  padding: 5px 6px calc(5px + env(safe-area-inset-bottom));
   justify-content: space-around;
-  box-shadow: 0 -2px 10px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.25);
 }
 .m-nav-btn {
   flex: 1;
   background: transparent;
   color: #94a3b8;
   border: none;
-  padding: 5px 2px;
+  padding: 6px 2px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 .m-nav-btn .m-icon {
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.1;
+}
+.m-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.m-nav-badge {
+  position: absolute;
+  top: -5px;
+  right: -12px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.m-nav-badge[hidden] {
+  display: none !important;
 }
 .m-nav-btn.active {
   color: #fde047;
@@ -1035,7 +1097,7 @@ button, .file-btn {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: 70px;
+  bottom: 74px;
   transform: translateX(-50%);
   background: #0f172a;
   color: #fff;
@@ -1054,10 +1116,201 @@ button, .file-btn {
 .toast.show { opacity: 1; }
 
 @media (max-width: 760px) {
-  .two-col { grid-template-columns: 1fr; }
-  .app-header .tabs { display: none; }
-  .mobile-bottom-nav { display: flex; }
-  .app-header h1 { font-size: 15px; }
-  .card { padding: 14px; }
-  .filter-controls { align-items: flex-start; width: 100%; }
+  body {
+    font-size: 14px;
+    overflow-x: hidden;
+  }
+  .app-header {
+    padding: 8px 10px 2px;
+  }
+  .header-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  .brand-row {
+    justify-content: space-between;
+    padding-bottom: 2px;
+  }
+  .app-header h1 {
+    font-size: 15.5px;
+  }
+  /* スマホではドロップダウンの代わりに1タップピルバーで生徒切替 */
+  .student-switcher {
+    display: none;
+  }
+  .mobile-student-pills {
+    display: flex;
+  }
+  .app-header .tabs {
+    display: none;
+  }
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  main {
+    padding: 10px 10px calc(135px + env(safe-area-inset-bottom));
+  }
+
+  /* スマホでは下部ナビに合わせて1画面1機能で切り替え（縦長スクロール解消） */
+  #view-home[data-msection="carte"] #card-review-upcoming,
+  #view-home[data-msection="carte"] #section-unit-map {
+    display: none !important;
+  }
+  #view-home[data-msection="review"] #card-carte,
+  #view-home[data-msection="review"] #section-unit-map {
+    display: none !important;
+  }
+  #view-home[data-msection="units"] .two-col {
+    display: none !important;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+  .card {
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+  .card-head {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  /* iOS Safariの入力時勝手にズーム防止（16px指定） ＆ タップしやすさ向上 */
+  input, select, textarea,
+  .drive-meta-input, .carte-search-input, .carte-editor-textarea,
+  .rec-manual-add-row input, .phase-add-row input, .carte-goal-config input,
+  .sched-memo-textarea, .time-slot-min-input, .time-slot-label-input {
+    font-size: 16px !important;
+  }
+
+  .drive-meta-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .drive-meta-input, .carte-search-wrap {
+    width: 100%;
+    min-width: 0;
+  }
+  .drive-doc-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .doc-tab-pill {
+    flex-shrink: 0;
+    padding: 7px 13px;
+    font-size: 13px;
+  }
+  .carte-editor-textarea {
+    min-height: 240px;
+    padding: 10px;
+  }
+
+  /* 復習リスト＆直近予定をスマホでは見やすく広げる */
+  .rec-unit-list {
+    max-height: none;
+  }
+  .rec-unit-row {
+    padding: 8px 10px;
+  }
+  .rec-unit-btns button {
+    padding: 7px 11px;
+    font-size: 12.5px;
+  }
+
+  /* 単元理解度マップ：スマホ画面幅にぴったり収める */
+  #home-unit-map {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .filter-controls {
+    align-items: stretch;
+    width: 100%;
+  }
+  .filter-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filter-pills .pill {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 12.5px;
+  }
+  .chip {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* スマホで単元をタップした際、画面下部に固定ボトムシートとして表示（スクロール不要で即変更） */
+  .unit-picker-bar {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    z-index: 55;
+    margin: 0;
+    padding: 12px;
+    background: #ffffff;
+    border: 2px solid #2563eb;
+    border-radius: 14px;
+    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.28);
+  }
+  .unit-picker-levels {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+  }
+  .unit-picker-levels > span {
+    grid-column: 1 / -1;
+  }
+  .unit-picker-levels .chip {
+    justify-content: center;
+    padding: 8px 2px;
+    font-size: 11.5px;
+    text-align: center;
+    border-radius: 8px;
+  }
+  .unit-picker-levels button.danger,
+  .unit-picker-levels button.secondary {
+    grid-column: span 2;
+    padding: 7px 8px;
+    font-size: 12px;
+  }
+
+  /* カレンダー画面のスマホ最適化 */
+  .cal-grid {
+    gap: 2px;
+    padding: 3px;
+  }
+  .cal-day {
+    min-height: 58px;
+    padding: 3px;
+  }
+  .cal-event-chip {
+    font-size: 9.5px;
+    padding: 2px 3px;
+  }
+  .schedule-form-wrap .row label {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .schedule-form-wrap .row label input,
+  .schedule-form-wrap .row label select {
+    flex: 1;
+  }
+  .time-slot-range {
+    min-width: 96px;
+    font-size: 11px;
+  }
 }
